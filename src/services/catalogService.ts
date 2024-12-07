@@ -19,17 +19,26 @@ export class CatalogService {
     }
 
     private saveState(): void {
-        fs.writeFileSync(this.stateFile, JSON.stringify(this.root, null, 2));
+        const state = this.convertToState(this.root);
+        fs.writeFileSync(this.stateFile, JSON.stringify(state, null, 2));
     }
 
     private restoreTree(data: any): TreeModel {
         const node = new TreeModel(data.name);
         if (data.children) {
-            for (const [key, child] of Object.entries(data.children)) {
-                node.children.set(key, this.restoreTree(child));
+            for (const child of data.children) {
+                node.children.set(child.name, this.restoreTree(child));
             }
         }
         return node;
+    }
+
+    private convertToState(node: TreeModel): any {
+        const children = Array.from(node.children.values()).map(child => this.convertToState(child));
+        return {
+            name: node.name,
+            children: children
+        };
     }
 
     create(path: string): void {
